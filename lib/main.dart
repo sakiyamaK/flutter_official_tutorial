@@ -1,178 +1,136 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(BooksApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class Book {
+  final String title;
+  final String author;
 
-  Column _buildButtonColumn(Color color, IconData icon, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: color),
-        Container(
-          margin: const EdgeInsets.only(top: 8),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Book(this.title, this.author);
+
+  static List<Book> books = [
+    Book('Left Hand of Darkness', 'Ursula K. Le Guin'),
+    Book('Too Like the Lightning', 'Ada Palmer'),
+    Book('Kindred', 'Octavia E. Butler'),
+  ];
+}
+
+class BooksApp extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _BooksAppState();
+}
+
+class _BooksAppState extends State<BooksApp> {
+  Book? _selectedBook;
 
   @override
   Widget build(BuildContext context) {
-    Widget titleSection = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      child: Row(
-        children: [
-          Expanded(
-            /*1*/
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /*2*/
-                Container(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: const Text(
-                    'hot reload',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Text(
-                  'いええええええい',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                  ),
-                ),
-              ],
+    return MaterialApp(
+      title: 'Books App',
+      home: Navigator(
+        pages: [
+          MaterialPage(
+            key: ValueKey('BooksListPage'),
+            child: BooksListScreen(
+              books: Book.books,
+              onTapped: _handleBookTapped,
             ),
           ),
-          const FavoriteWidget()
-          // /*3*/
-          // Container(
-          //   padding: EdgeInsets.only(right: 10),
-          //   child: Icon(
-          //     Icons.star,
-          //     color: Colors.red[500],
-          //   ),
-          // ),
-          // const Text('41'),
+          if (_selectedBook != null)
+            BookDetailsPage(book: _selectedBook ?? Book.books.first)
+        ],
+        onPopPage: (route, result) {
+          if (!route.didPop(result)) {
+            return false;
+          }
+
+          // Update the list of pages by setting _selectedBook to null
+          setState(() {
+            _selectedBook = null;
+          });
+
+          return true;
+        },
+      ),
+    );
+  }
+
+  void _handleBookTapped(Book book) {
+    setState(() {
+      _selectedBook = book;
+    });
+  }
+}
+
+class BookDetailsPage extends Page {
+  final Book? book;
+
+  BookDetailsPage({
+    this.book,
+  }) : super(key: ValueKey(book));
+
+  Route createRoute(BuildContext context) {
+    return MaterialPageRoute(
+      settings: this,
+      builder: (BuildContext context) {
+        return BookDetailsScreen(book: book ?? Book.books.first);
+      },
+    );
+  }
+}
+
+class BooksListScreen extends StatelessWidget {
+  final List<Book>? books;
+  final ValueChanged<Book>? onTapped;
+
+  BooksListScreen({
+    @required this.books,
+    @required this.onTapped,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: ListView(
+        children: [
+          for (var book in books ?? [])
+            ListTile(
+              title: Text(book.title),
+              subtitle: Text(book.author),
+              onTap: () => onTapped!(book),
+            )
         ],
       ),
     );
-
-    Color color = Theme.of(context).primaryColor;
-
-    Widget buttonSection = Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildButtonColumn(color, Icons.call, 'CALL'),
-        _buildButtonColumn(color, Icons.near_me, 'ROUTE'),
-        _buildButtonColumn(color, Icons.share, 'SHARE'),
-      ],
-    );
-
-    Widget textSection = const Padding(
-      padding: EdgeInsets.all(32),
-      child: Text(
-        """
-Flutterは楽しいなあ！！！
-Flutterは楽しいなあ！！！
-Flutterは楽しいなあ！！！
-""",
-        softWrap: true,
-      ),
-    );
-
-    return MaterialApp(
-      title: 'Flutter layout demo',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-      ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            "Flutter layout demo",
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-        body: ListView(
-          children: [
-            Image.asset(
-              'images/lake.jpg',
-              width: 600,
-              height: 480,
-              fit: BoxFit.cover,
-            ),
-            titleSection,
-            buttonSection,
-            textSection,
-          ],
-        ),
-      ),
-    );
   }
 }
 
-class FavoriteWidget extends StatefulWidget {
-  const FavoriteWidget({Key? key}) : super(key: key);
+class BookDetailsScreen extends StatelessWidget {
+  final Book? book;
 
-  @override
-  _FavoriteWidgetState createState() => _FavoriteWidgetState();
-}
-
-class _FavoriteWidgetState extends State<FavoriteWidget> {
-  bool _isFavorited = true;
-  int _favoriteCount = 41;
-
-  void _toggleFavorite() {
-    setState(() {
-      if (_isFavorited) {
-        _favoriteCount -= 1;
-        _isFavorited = false;
-      } else {
-        _favoriteCount += 1;
-        _isFavorited = true;
-      }
-    });
-  }
+  BookDetailsScreen({
+    @required this.book,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(0),
-          child: IconButton(
-            padding: const EdgeInsets.all(0),
-            alignment: Alignment.centerRight,
-            icon: (_isFavorited
-                ? const Icon(Icons.star)
-                : const Icon(Icons.star_border)),
-            color: Colors.red[500],
-            onPressed: _toggleFavorite,
-          ),
+    return Scaffold(
+      appBar: AppBar(),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (book != null) ...[
+              Text(book!.title, style: Theme.of(context).textTheme.headline6),
+              Text(book!.author, style: Theme.of(context).textTheme.subtitle1),
+            ],
+          ],
         ),
-        SizedBox(
-          width: 18,
-          child: SizedBox(
-            child: Text('$_favoriteCount'),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
